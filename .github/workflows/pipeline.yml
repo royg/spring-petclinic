@@ -1,0 +1,56 @@
+name: Secure CI Pipeline - Spring PetClinic 
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  JFROG_URL: https://royg.jfrog.io
+  DOCKER_IMAGE: royg.jfrog.io/petclinic-docker-local/spring-petclinic
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ env.JFROG_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JFROG_ACCESS_TOKEN }}
+
+      - name: Configure Maven to use JFrog Artifactory
+        run: jf mvn-config --repo-resolve-releases=petclinic-maven-virtual --repo-resolve-snapshots=petclinic-maven-virtual --repo-deploy-releases=petclinic-maven-dev-local --repo-deploy-snapshots=petclinic-maven-dev-local
+
+      - name: Compile the application
+        run: jf mvn clean compile -DskipTests
+
+      - name: Run tests
+        run: jf mvn test
+
+      - name: Package application
+        run: jf mvn package -DskipTests
+
+      - name: Build Docker image
+        run: docker build -t ${{ env.DOCKER_IMAGE }}:${{ github.sha }} .
+
+      - name: Push Docker image to Artifactory
+        run: |
+          jf docker push ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+
+      - name: Scan Docker image with Xray
+        run: jf docker scan ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+
+      - name: Publish build info to Artifactory
+        run: jf rt build-publish
