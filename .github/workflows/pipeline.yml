@@ -35,10 +35,10 @@ jobs:
 
       - name: Configure Maven to use JFrog Artifactory
         run: jf mvn-config \ 
-          --repo-resolve-releases=petclinic-maven-virtual \
-          --repo-resolve-snapshots=petclinic-maven-virtual \
-          --repo-deploy-releases=petclinic-maven-dev-local \
-          --repo-deploy-snapshots=petclinic-maven-dev-local 
+          --repo-resolve-releases petclinic-maven-virtual \
+          --repo-resolve-snapshots petclinic-maven-virtual \
+          --repo-deploy-releases petclinic-maven-dev-local \
+          --repo-deploy-snapshots petclinic-maven-dev-local 
           
       - name: Compile the application
         run: jf mvn clean compile -DskipTests
