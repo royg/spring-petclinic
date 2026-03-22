@@ -34,12 +34,8 @@ jobs:
           JF_USER: ${{ secrets.JFROG_USERNAME }}  
 
       - name: Configure Maven to use JFrog Artifactory
-        run: jf mvn-config \ 
-          --repo-resolve-releases petclinic-maven-virtual \
-          --repo-resolve-snapshots petclinic-maven-virtual \
-          --repo-deploy-releases petclinic-maven-dev-local \
-          --repo-deploy-snapshots petclinic-maven-dev-local 
-          
+        run: jf mvn-config --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=petclinic-maven-virtual --repo-resolve-snapshots=petclinic-maven-virtual --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=petclinic-maven-dev-local --repo-deploy-snapshots=petclinic-maven-dev-local
+    
       - name: Compile the application
         run: jf mvn clean compile -DskipTests
 
@@ -62,15 +58,11 @@ jobs:
         run: |
           docker build -t ${{ env.DOCKER_IMAGE }}:${{ github.sha }} .
 
-      - name: Push Docker image to Artifactory
-        run: |
-          jf docker push ${{ env.DOCKER_IMAGE }}:${{ github.sha }} \
-            --build-name="${{ env.JFROG_CLI_BUILD_NAME }}" \
-            --build-number="${{ env.JFROG_CLI_BUILD_NUMBER }}"
+      - name: Publish build info to Artifactory
+        run: jf rt build-publish ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
 
       - name: Scan Docker image with Xray
-        run: |
-          jf docker scan ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+        run: jf docker scan ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
 
       - name: Publish build info to Artifactory
         run: jf rt build-publish
