@@ -9,6 +9,8 @@ on:
 env:
   JFROG_URL: https://royg.jfrog.io
   DOCKER_IMAGE: royg.jfrog.io/petclinic-docker-local/spring-petclinic
+  JFROG_CLI_BUILD_NAME: spring-petclinic-pipeline
+  JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
 
 jobs:
   build:
@@ -29,9 +31,16 @@ jobs:
         env:
           JF_URL: ${{ env.JFROG_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JFROG_ACCESS_TOKEN }}
+          JF_USER: ${{ secrets.JFROG_USERNAME }}  
 
       - name: Configure Maven to use JFrog Artifactory
-        run: jf mvn-config --repo-resolve-releases=petclinic-maven-virtual --repo-resolve-snapshots=petclinic-maven-virtual --repo-deploy-releases=petclinic-maven-dev-local --repo-deploy-snapshots=petclinic-maven-dev-local
+        run: jf mvn-config \ 
+          --repo-resolve-releases=petclinic-maven-virtual \
+          --repo-resolve-snapshots=petclinic-maven-virtual \
+          --repo-deploy-releases=petclinic-maven-dev-local \
+          --repo-deploy-snapshots=petclinic-maven-dev-local \
+          --server-id-resolve=setup-jfrog-cli-server \
+          --server-id-deploy=setup-jfrog-cli-server
 
       - name: Compile the application
         run: jf mvn clean compile -DskipTests
@@ -42,15 +51,28 @@ jobs:
       - name: Package application
         run: jf mvn package -DskipTests
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to JFrog Container Registry
+        run: |
+          echo ${{ secrets.JFROG_ACCESS_TOKEN }} | docker login royg.jfrog.io \
+            --username ${{ secrets.JFROG_USERNAME }} \
+            --password-stdin
+
       - name: Build Docker image
-        run: docker build -t ${{ env.DOCKER_IMAGE }}:${{ github.sha }} .
+        run: |
+          docker build -t ${{ env.DOCKER_IMAGE }}:${{ github.sha }} .
 
       - name: Push Docker image to Artifactory
         run: |
-          jf docker push ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+          jf docker push ${{ env.DOCKER_IMAGE }}:${{ github.sha }} \
+            --build-name="${{ env.JFROG_CLI_BUILD_NAME }}" \
+            --build-number="${{ env.JFROG_CLI_BUILD_NUMBER }}"
 
       - name: Scan Docker image with Xray
-        run: jf docker scan ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+        run: |
+          jf docker scan ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
 
       - name: Publish build info to Artifactory
         run: jf rt build-publish
