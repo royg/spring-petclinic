@@ -38,10 +38,8 @@ jobs:
           --repo-resolve-releases=petclinic-maven-virtual \
           --repo-resolve-snapshots=petclinic-maven-virtual \
           --repo-deploy-releases=petclinic-maven-dev-local \
-          --repo-deploy-snapshots=petclinic-maven-dev-local \
-          --server-id-resolve=setup-jfrog-cli-server \
-          --server-id-deploy=setup-jfrog-cli-server
-
+          --repo-deploy-snapshots=petclinic-maven-dev-local 
+          
       - name: Compile the application
         run: jf mvn clean compile -DskipTests
 
