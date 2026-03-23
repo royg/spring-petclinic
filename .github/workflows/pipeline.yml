@@ -55,14 +55,14 @@ jobs:
             --password-stdin
 
       - name: Build Docker image
-        run: |
-          docker build -t ${{ env.DOCKER_IMAGE }}:${{ github.sha }} .
+        run:  docker build -t ${{ env.DOCKER_IMAGE }}:${{ github.sha }} .
 
-      - name: Publish build info to Artifactory
-        run: jf rt build-publish ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
+      - name: Push Docker image to Artifactory
+        run: docker push ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
 
       - name: Scan Docker image with Xray
         run: jf docker scan ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
 
       - name: Publish build info to Artifactory
-        run: jf rt build-publish
+        run: jf rt build-publish ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
+
