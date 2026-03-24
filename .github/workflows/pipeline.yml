@@ -11,6 +11,7 @@ env:
   DOCKER_IMAGE: royg.jfrog.io/petclinic-docker-local/spring-petclinic
   JFROG_CLI_BUILD_NAME: spring-petclinic-pipeline
   JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -61,7 +62,7 @@ jobs:
         run: docker push ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
 
       - name: Scan Docker image with Xray
-        run: jf docker scan ${{ env.DOCKER_IMAGE }}:${{ github.sha }} --format json > oyg-jfrog-xray-scan-results.json
+        run: jf docker scan ${{ env.DOCKER_IMAGE }}:${{ github.sha }} --format json > royg-jfrog-xray-scan-results.json
           cat royg-jfrog-xray-scan-results.json
 
       - name: Upload Xray scan results as artifact
