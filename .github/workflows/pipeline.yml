@@ -75,4 +75,4 @@ jobs:
         run: jf rt build-publish ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
 
       - name: Enforce Xray quality gate
-        run: jf rt build-scan ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
+        run: jf build-scan ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
