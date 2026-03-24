@@ -12,13 +12,10 @@ env:
   DOCKER_IMAGE: royg.jfrog.io/petclinic-docker-local/spring-petclinic
   JFROG_CLI_BUILD_NAME: spring-petclinic-pipeline
   JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     
     steps:
       - name: Checkout source code
@@ -77,3 +74,5 @@ jobs:
       - name: Publish build info to Artifactory
         run: jf rt build-publish ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
 
+      - name: Enforce Xray quality gate
+        run: jf rt build-scan ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
